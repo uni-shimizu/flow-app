@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>フローチャート作成</title>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --text-main: #334155;
+            --text-light: #64748b;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success: #047857;
+            --warning: #b45309;
+            --danger: #b91c1c;
+            --border: #94a3b8;
+            --card-bg: #ffffff;
+            --focus: #005fcc;
+            --surface-subtle: #f1f5f9;
+            --surface-muted: #e2e8f0;
+            --text-strong: #0f172a;
+        }
+
+        body {
+            font-family: 'BIZ UDPGothic', 'Yu Gothic Medium', 'Yu Gothic', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.7;
+            font-size: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: var(--text-main);
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .content-area {
+            background: var(--card-bg);
+            padding: clamp(16px, 2.5vw, 30px);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .editor-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .editor-layout {
+                flex-direction: row;
+            }
+        }
+
+        .editor-left {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .editor-right {
+            flex: 1;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: #f8fafc;
+            min-height: 560px;
+            overflow: auto;
+            position: relative;
+        }
+
+        .node-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .node-item {
+            border: 1px solid var(--border);
+            padding: 16px;
+            border-radius: 8px;
+            background: var(--card-bg);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .node-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: var(--text-light);
+        }
+
+        .node-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .node-body {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        input[type="text"], input[type="number"], select {
+            padding: 10px 12px;
+            min-height: 44px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 1rem;
+            width: 100%;
+            background: #ffffff;
+            color: var(--text-main);
+        }
+
+        input:disabled {
+            background-color: #e2e8f0;
+            color: #94a3b8;
+            cursor: not-allowed;
+        }
+        
+        .condition-settings {
+            background: #f1f5f9;
+            padding: 10px;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border-left: 3px solid var(--warning);
+        }
+
+        button {
+            padding: 10px 16px;
+            min-height: 44px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-weight: bold;
+        }
+
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: white; color: var(--danger); border: 1px solid var(--danger); }
+        .btn-icon { padding: 8px 10px; min-width: 44px; min-height: 44px; font-size: 1rem; }
+        .btn-outline { background: white; color: var(--primary); border: 1px solid var(--primary); }
+        
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .message-box {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+            font-weight: bold;
+        }
+        .message-error { background: #fee2e2; color: #b91c1c; border: 1px solid #f87171; }
+        .message-hint { background: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc; }
+
+
+        .optional-settings {
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            border-left: 3px solid #94a3b8;
+        }
+        .optional-settings small { color: var(--text-light); }
+        .position-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.875rem;
+            font-weight: normal;
+            color: var(--text-light);
+        }
+        .position-select {
+            width: auto !important;
+            min-width: 58px;
+            padding: 8px 8px !important;
+            min-height: 44px;
+            font-size: 0.95rem !important;
+        }
+        .locked-badge {
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: #e2e8f0;
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+        .node-locked { background: #f8fafc; }
+        .reorder-help {
+            margin: 0 2px 8px;
+            color: var(--text-light);
+            font-size: 0.875rem;
+        }
+        @media (max-width: 600px) {
+            .node-actions { flex-wrap: wrap; justify-content: flex-end; }
+        }
+
+
+        /* UD・アクセシビリティ：元の配色とカード構成を保ちながら読みやすさを強化 */
+        .skip-link {
+            position: fixed;
+            left: 12px;
+            top: 8px;
+            z-index: 9999;
+            transform: translateY(-160%);
+            padding: 10px 14px;
+            border-radius: 6px;
+            background: var(--text-strong);
+            color: #fff;
+            font-weight: bold;
+            text-decoration: none;
+        }
+        .skip-link:focus { transform: translateY(0); }
+        .visually-hidden {
+            position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            padding: 0 !important;
+            margin: -1px !important;
+            overflow: hidden !important;
+            clip: rect(0, 0, 0, 0) !important;
+            white-space: nowrap !important;
+            border: 0 !important;
+        }
+        .section-heading {
+            margin: 0 0 4px;
+            font-size: 1.125rem;
+            color: var(--text-strong);
+        }
+        .section-help {
+            margin: 0 0 12px;
+            color: var(--text-light);
+            font-size: 0.95rem;
+        }
+        .editor-panel { min-width: 0; }
+        .preview-panel { flex: 1; min-width: 0; }
+        .field-label, .settings-title {
+            display: block;
+            margin-bottom: 4px;
+            color: var(--text-strong);
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+        .field-note {
+            color: var(--text-light);
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+        .optional-tag {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 1px 6px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            color: var(--text-light);
+            font-size: 0.875rem;
+            font-weight: 400;
+            vertical-align: middle;
+        }
+        .node-number { color: var(--text-strong); }
+        .node-item:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
+        }
+        button, select, input { font: inherit; }
+        button { touch-action: manipulation; }
+        button:disabled, select:disabled, input:disabled {
+            cursor: not-allowed;
+            opacity: 0.72;
+        }
+        button:focus-visible,
+        select:focus-visible,
+        input:focus-visible,
+        summary:focus-visible,
+        .editor-right:focus-visible {
+            outline: 3px solid var(--focus);
+            outline-offset: 2px;
+        }
+        .btn-primary:active { background: #1e40af; }
+        .btn-outline:hover { background: #eff6ff; }
+        .btn-danger:hover { background: #fef2f2; }
+        .condition-settings,
+        .optional-settings {
+            border-top: 1px solid #e2e8f0;
+        }
+        .condition-settings { border-left-color: #b45309; }
+        .optional-settings { border-left-color: #64748b; }
+        .message-box {
+            border-left-width: 5px;
+            line-height: 1.55;
+        }
+        .message-error { color: #991b1b; border-color: #dc2626; }
+        .message-hint { color: #075985; border-color: #0284c7; }
+        .reorder-help {
+            padding: 9px 11px;
+            border-radius: 6px;
+            background: var(--surface-subtle);
+            color: #475569;
+            line-height: 1.6;
+        }
+        .preview-placeholder {
+            padding: 42px 16px;
+            text-align: center;
+            color: #64748b;
+        }
+        .text-summary {
+            margin-top: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: #fff;
+        }
+        .text-summary summary {
+            cursor: pointer;
+            padding: 10px 12px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+        .text-summary-content {
+            padding: 0 14px 12px;
+            color: var(--text-main);
+            font-size: 0.95rem;
+        }
+        .text-summary-content ol { margin: 8px 0 0; padding-left: 1.5rem; }
+        .text-summary-content li { margin: 4px 0; }
+        @media (min-width: 1000px) {
+            .editor-left { flex: 1.05; }
+            .preview-panel { flex: 0.95; }
+            .editor-right { max-height: 76vh; }
+        }
+        @media (max-width: 600px) {
+            .container { padding: 12px; }
+            header { margin-bottom: 18px; }
+            .toolbar { display: grid; grid-template-columns: 1fr; }
+            .toolbar button { width: 100%; }
+            .node-header { align-items: flex-start; gap: 8px; }
+            .node-actions { width: 100%; justify-content: flex-start; }
+            .position-label { flex: 1 1 auto; }
+            .position-select { min-width: 72px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                scroll-behavior: auto !important;
+                transition-duration: 0.01ms !important;
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+            }
+        }
+        @media (prefers-contrast: more) {
+            :root { --border: #64748b; }
+            .node-item, .editor-right, .text-summary { border-width: 2px; }
+            .message-box { border-width: 2px 2px 2px 6px; }
+        }
+
+        /* コンパクトUI：説明文を減らし、必要な操作だけを見せる */
+        body { line-height: 1.6; }
+        header { margin-bottom: 18px; }
+        h1 { margin: 0; font-size: 1.4rem; }
+        .content-area { padding: clamp(14px, 2vw, 22px); }
+        .toolbar { margin-bottom: 14px; }
+        .node-list { gap: 8px; }
+        .node-item { padding: 12px; }
+        .node-header { margin-bottom: 8px; padding-bottom: 7px; }
+        .node-body { gap: 8px; }
+        .form-group { gap: 3px; }
+        .field-label { margin-bottom: 2px; font-size: 0.9rem; }
+        .section-heading { margin-bottom: 8px; }
+        .condition-settings {
+            padding: 9px 10px;
+            gap: 7px;
+            border-left-width: 3px;
+        }
+        .reorder-help {
+            padding: 6px 9px;
+            margin: 0 2px 6px;
+            font-size: 0.82rem;
+            line-height: 1.4;
+        }
+        .node-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 2rem;
+            height: 2rem;
+            padding: 0 0.5rem;
+            border-radius: 999px;
+            background: var(--surface-subtle);
+            color: var(--text-strong);
+            font-weight: 800;
+        }
+        .next-settings {
+            padding-top: 7px;
+            border-top: 1px solid #e2e8f0;
+        }
+        .next-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 44px;
+            color: var(--text-main);
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .next-toggle input {
+            width: 20px;
+            height: 20px;
+            margin: 0;
+            accent-color: var(--primary);
+        }
+        .next-target { margin-top: 5px; }
+        .compact-arrow-label {
+            display: grid;
+            grid-template-columns: 4.25rem 1fr;
+            gap: 8px;
+            align-items: center;
+        }
+        .compact-arrow-label .field-label { margin: 0; }
+        @media (max-width: 600px) {
+            .node-item { padding: 11px; }
+            .compact-arrow-label { grid-template-columns: 3.6rem 1fr; }
+        }
+    </style>
+</head>
+<body>
+<a class="skip-link" href="#node-list">入力エリアへ移動</a>
+
+<main class="container" id="main-content">
+    <header>
+        <h1>フローチャート作成</h1>
+    </header>
+
+    <div class="content-area">
+        <div class="toolbar" role="toolbar" aria-label="フローチャートの操作">
+            <button type="button" class="btn-primary" onclick="generateFlowchart()" aria-label="フローチャートを作成">作成 <span aria-hidden="true">▶</span></button>
+            <button type="button" class="btn-outline" onclick="resetApp()" aria-label="最初からやり直す">リセット</button>
+        </div>
+
+        <div id="app-message" class="message-box message-error" role="alert" aria-live="assertive" aria-atomic="true" tabindex="-1"></div>
+        <div id="hint-message" class="message-box message-hint" role="status" aria-live="polite" aria-atomic="true"></div>
+        <div id="sr-status" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></div>
+
+        <div class="editor-layout">
+            <section class="editor-left editor-panel" aria-labelledby="input-heading">
+                <h2 id="input-heading" class="section-heading">1. 入力</h2>
+                <div id="node-list" class="node-list" aria-describedby="reorder-help">
+                    <!-- JavaScriptでノードを動的生成 -->
+                </div>
+                <div id="reorder-help" class="reorder-help">位置・↑↓で並び替え</div>
+                <button id="add-node-button" type="button" class="btn-outline" onclick="addNode()" style="width: 100%;" aria-label="処理を追加">＋ 追加</button>
+            </section>
+            
+            <section class="preview-panel editor-panel" aria-labelledby="preview-heading">
+                <h2 id="preview-heading" class="section-heading">2. プレビュー</h2>
+                <div class="editor-right" id="flowchart-svg-container" role="region" aria-label="フローチャートのプレビュー" tabindex="0">
+                    <div class="preview-placeholder">「作成」を押すと表示</div>
+                </div>
+                <details class="text-summary">
+                    <summary>文字で確認</summary>
+                    <div id="flowchart-text-summary" class="text-summary-content">まだ作成されていません。</div>
+                </details>
+            </section>
+        </div>
+    </div>
+</main>
+
+<script>
+    const appState = {
+        nodes: [
+            { id: 1, type: 'start', text: '開始', locked: true },
+            { id: 2, type: 'process', text: '' },
+            { id: 3, type: 'end', text: '終了', locked: true }
+        ],
+        nextId: 4,
+        dirty: false
+    };
+
+    const typeOptions = [
+        { value: 'process', label: '処理' },
+        { value: 'data', label: 'データ（入力・出力）' },
+        { value: 'decision', label: '判断（分岐）' },
+        { value: 'loop_start', label: 'ループ端（始端）' },
+        { value: 'loop_end', label: 'ループ端（終端）' },
+        { value: 'defined', label: '定義済み処理' }
+    ];
+
+    const customNextTypes = new Set(['process', 'data', 'defined']);
+
+    window.onload = () => {
+        renderNodes();
+        announce('フローチャート作成を読み込みました。');
+    };
+
+    function announce(msg) {
+        const status = document.getElementById('sr-status');
+        if (!status) return;
+        status.textContent = '';
+        requestAnimationFrame(() => { status.textContent = msg; });
+    }
+
+    function showMessage(msg, isError = true) {
+        const box = document.getElementById('app-message');
+        box.textContent = msg;
+        box.className = 'message-box ' + (isError ? 'message-error' : 'message-hint');
+        box.setAttribute('role', isError ? 'alert' : 'status');
+        box.setAttribute('aria-live', isError ? 'assertive' : 'polite');
+        box.style.display = 'block';
+        if (!isError) setTimeout(() => { box.style.display = 'none'; }, 10000);
+    }
+
+    function showHint(msg) {
+        const box = document.getElementById('hint-message');
+        box.textContent = msg;
+        box.style.display = 'block';
+        setTimeout(() => { box.style.display = 'none'; }, 10000);
+    }
+
+    function markDirty() {
+        appState.dirty = true;
+    }
+
+    function focusNodeControl(id, preferredId = null) {
+        requestAnimationFrame(() => {
+            const target = preferredId ? document.getElementById(preferredId) : null;
+            const card = document.querySelector(`[data-node-id="${id}"]`);
+            (target || card?.querySelector('input:not(:disabled), select:not(:disabled), button:not(:disabled)'))?.focus();
+        });
+    }
+
+    function clearValidationState() {
+        document.querySelectorAll('[aria-invalid="true"]').forEach(el => el.removeAttribute('aria-invalid'));
+    }
+
+    function focusNodeFromMessage(message) {
+        const match = String(message).match(/番号(\d+)/);
+        if (!match) {
+            document.getElementById('app-message')?.focus();
+            return;
+        }
+        const index = Number(match[1]) - 1;
+        const node = appState.nodes[index];
+        if (!node) return;
+
+        let controlId = `node-text-${node.id}`;
+        if (message.includes('「はい」')) controlId = `yes-next-${node.id}`;
+        else if (message.includes('「いいえ」')) controlId = `no-next-${node.id}`;
+        else if (message.includes('繰り返し回数')) controlId = `loop-count-${node.id}`;
+        else if (message.includes('ループ終端') || message.includes('ループ始端')) {
+            controlId = node.type === 'loop_end' ? `loop-start-${node.id}` : `node-type-${node.id}`;
+        } else if (message.includes('行き先')) controlId = `next-id-${node.id}`;
+
+        requestAnimationFrame(() => {
+            const control = document.getElementById(controlId);
+            const card = document.querySelector(`[data-node-id="${node.id}"]`);
+            const target = control || card?.querySelector('input:not(:disabled), select:not(:disabled), button:not(:disabled)');
+            target?.setAttribute?.('aria-invalid', 'true');
+            target?.scrollIntoView({ block: 'center', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+            target?.focus();
+        });
+    }
+
+    function escapeHTML(value) {
+        return String(value ?? '').replace(/[&<>'"]/g,
+            tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+        );
+    }
+
+    function getNodeLabel(node, index) {
+        if (node.type === 'loop_end') return `番号${index + 1}: ループ終端`;
+        return `番号${index + 1}: ${escapeHTML(node.text || '未入力')}`;
+    }
+
+    function buildTargetOptions(currentNode, selectedId, autoLabel = null) {
+        let html = autoLabel !== null
+            ? `<option value="">${escapeHTML(autoLabel)}</option>`
+            : '<option value="">-- 選択してください --</option>';
+
+        appState.nodes.forEach((n, idx) => {
+            if (n.id === currentNode.id || n.type === 'start') return;
+            const selected = String(selectedId ?? '') === String(n.id) ? ' selected' : '';
+            html += `<option value="${n.id}"${selected}>${getNodeLabel(n, idx)}</option>`;
+        });
+        return html;
+    }
+
+    function renderNodes() {
+        const container = document.getElementById('node-list');
+        container.innerHTML = '';
+
+        appState.nodes.forEach((node, index) => {
+            const el = document.createElement('div');
+            el.className = 'node-item' + (node.locked ? ' node-locked' : '');
+            el.dataset.nodeId = node.id;
+            el.setAttribute('role', 'group');
+            el.setAttribute('aria-labelledby', `node-title-${node.id}`);
+            let typeSelectHTML = '';
+            if (node.locked) {
+                const label = node.type === 'start' ? '端子（開始）' : '端子（終了）';
+                typeSelectHTML = `<label class="field-label" for="node-type-${node.id}">記号</label><select id="node-type-${node.id}" disabled aria-label="図記号：${label}"><option>${label}</option></select>`;
+            } else {
+                typeSelectHTML = `<label class="field-label" for="node-type-${node.id}">記号</label><select id="node-type-${node.id}" onchange="updateNodeType(${node.id}, this.value)">`;
+                typeOptions.forEach(opt => {
+                    const selected = node.type === opt.value ? 'selected' : '';
+                    typeSelectHTML += `<option value="${opt.value}" ${selected}>${opt.label}</option>`;
+                });
+                typeSelectHTML += '</select>';
+            }
+
+            let conditionHTML = '';
+            let textInputHTML = '';
+
+            if (node.type === 'decision') {
+                conditionHTML = `
+                    <div class="condition-settings">
+                                                <div class="compact-arrow-label">
+                            <label class="field-label" for="yes-next-${node.id}">はい →</label>
+                            <select id="yes-next-${node.id}" aria-required="true" onchange="updateNodeProp(${node.id}, 'yesNext', this.value)">
+                                ${buildTargetOptions(node, node.yesNext)}
+                            </select>
+                        </div>
+                        <div class="compact-arrow-label">
+                            <label class="field-label" for="no-next-${node.id}">いいえ →</label>
+                            <select id="no-next-${node.id}" aria-required="true" onchange="updateNodeProp(${node.id}, 'noNext', this.value)">
+                                ${buildTargetOptions(node, node.noNext)}
+                            </select>
+                        </div>
+                    </div>
+                `;
+                textInputHTML = `<label class="field-label" for="node-text-${node.id}">条件</label><input id="node-text-${node.id}" data-role="node-text" type="text" aria-required="true" placeholder="例：雨が降っていますか？" value="${escapeHTML(node.text || '')}" oninput="updateNodeProp(${node.id}, 'text', this.value)">`;
+            } else if (node.type === 'loop_start') {
+                conditionHTML = `
+                    <div class="condition-settings">
+                                                <label class="field-label" for="loop-count-${node.id}">回数</label>
+                        <input id="loop-count-${node.id}" type="number" aria-required="true" min="1" step="1" inputmode="numeric" placeholder="例：5" value="${escapeHTML(node.loopCount || '')}" oninput="updateNodeProp(${node.id}, 'loopCount', this.value)">
+                    </div>
+                `;
+                textInputHTML = `<label class="field-label" for="node-text-${node.id}">名前 <span class="optional-tag">任意</span></label><input id="node-text-${node.id}" data-role="node-text" type="text" placeholder="例：反復A" value="${escapeHTML(node.text || '')}" oninput="updateNodeProp(${node.id}, 'text', this.value)">`;
+            } else if (node.type === 'loop_end') {
+                let startOptions = '<option value="">-- ループ始端を選択 --</option>';
+                appState.nodes.forEach((n, idx) => {
+                    if (n.type !== 'loop_start') return;
+                    const selected = String(node.loopStartId ?? '') === String(n.id) ? ' selected' : '';
+                    startOptions += `<option value="${n.id}"${selected}>番号${idx + 1}: ${escapeHTML(n.text || 'ループ始端')}</option>`;
+                });
+                conditionHTML = `
+                    <div class="condition-settings">
+                                                <label class="field-label" for="loop-start-${node.id}">始端</label>
+                        <select id="loop-start-${node.id}" aria-required="true" onchange="updateNodeProp(${node.id}, 'loopStartId', this.value)">
+                            ${startOptions}
+                        </select>
+                    </div>
+                `;
+                textInputHTML = `<label class="field-label" for="node-text-${node.id}">内容</label><input id="node-text-${node.id}" type="text" value="終端" disabled>`;
+            } else {
+                const readOnly = node.locked ? ' disabled' : '';
+                textInputHTML = `<label class="field-label" for="node-text-${node.id}">内容</label><input id="node-text-${node.id}" data-role="node-text" type="text" aria-required="${node.locked ? 'false' : 'true'}" placeholder="処理内容を入力" value="${escapeHTML(node.text || '')}" oninput="updateNodeProp(${node.id}, 'text', this.value)"${readOnly}>`;
+
+                if (customNextTypes.has(node.type)) {
+                    const nextOverride = Boolean(node.nextOverride || node.nextId);
+                    conditionHTML = `
+                        <div class="next-settings">
+                            <label class="next-toggle" for="next-toggle-${node.id}">
+                                <input id="next-toggle-${node.id}" type="checkbox" ${nextOverride ? 'checked' : ''} onchange="toggleNextOverride(${node.id}, this.checked)">
+                                <span>次を変更</span>
+                            </label>
+                            ${nextOverride ? `
+                                <div class="next-target">
+                                    <label class="visually-hidden" for="next-id-${node.id}">次の行き先</label>
+                                    <select id="next-id-${node.id}" aria-label="次の行き先" onchange="updateNodeProp(${node.id}, 'nextId', this.value)">
+                                        ${buildTargetOptions(node, node.nextId, '行き先を選ぶ')}
+                                    </select>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }
+            }
+
+            let reorderHTML = '';
+            if (!node.locked) {
+                let posOptions = '';
+                for (let pos = 2; pos <= appState.nodes.length - 1; pos++) {
+                    posOptions += `<option value="${pos}" ${pos === index + 1 ? 'selected' : ''}>${pos}</option>`;
+                }
+                reorderHTML = `
+                    <label class="position-label" for="position-${node.id}" title="指定した位置へ移動">位置
+                        <select id="position-${node.id}" class="position-select" aria-label="番号${index + 1}の移動先の位置" onchange="moveNodeTo(${node.id}, this.value)">${posOptions}</select>
+                    </label>
+                    <button type="button" class="btn-icon" onclick="moveNode(${index}, -1)" ${index <= 1 ? 'disabled' : ''} aria-label="番号${index + 1}を1つ上へ移動" title="1つ上へ"><span aria-hidden="true">↑</span></button>
+                    <button type="button" class="btn-icon" onclick="moveNode(${index}, 1)" ${index >= appState.nodes.length - 2 ? 'disabled' : ''} aria-label="番号${index + 1}を1つ下へ移動" title="1つ下へ"><span aria-hidden="true">↓</span></button>
+                    <button type="button" class="btn-danger btn-icon" onclick="removeNode(${node.id})" aria-label="番号${index + 1}を削除">削除</button>
+                `;
+            } else {
+                reorderHTML = '<span class="locked-badge">固定</span>';
+            }
+
+            el.innerHTML = `
+                <div class="node-header">
+                    <span id="node-title-${node.id}" class="node-number" aria-label="番号 ${index + 1}">${index + 1}</span>
+                    <div class="node-actions">${reorderHTML}</div>
+                </div>
+                <div class="node-body">
+                    <div class="form-group">${textInputHTML}</div>
+                    <div class="form-group">${typeSelectHTML}</div>
+                    ${conditionHTML}
+                </div>
+            `;
+            container.appendChild(el);
+        });
+    }
+
+    function addNode() {
+        const endIndex = appState.nodes.findIndex(n => n.type === 'end' && n.locked);
+        const node = { id: appState.nextId++, type: 'process', text: '' };
+        if (endIndex >= 0) appState.nodes.splice(endIndex, 0, node);
+        else appState.nodes.push(node);
+        markDirty();
+        renderNodes();
+        focusNodeControl(node.id, `node-text-${node.id}`);
+        announce(`番号${appState.nodes.findIndex(n => n.id === node.id) + 1}の処理を追加しました。`);
+    }
+
+    function clearReferencesToNode(id) {
+        appState.nodes.forEach(n => {
+            if (String(n.yesNext ?? '') === String(id)) n.yesNext = null;
+            if (String(n.noNext ?? '') === String(id)) n.noNext = null;
+            if (String(n.loopStartId ?? '') === String(id)) n.loopStartId = null;
+            if (String(n.nextId ?? '') === String(id)) { n.nextId = null; n.nextOverride = false; }
+        });
+    }
+
+    function removeNode(id) {
+        const target = appState.nodes.find(n => n.id === id);
+        if (!target || target.locked) return;
+        appState.nodes = appState.nodes.filter(n => n.id !== id);
+        clearReferencesToNode(id);
+        markDirty();
+        renderNodes();
+        document.getElementById('add-node-button')?.focus();
+        announce('処理を削除しました。');
+    }
+
+    function moveNode(index, direction) {
+        if (index <= 0 || index >= appState.nodes.length - 1) return;
+        const newIndex = index + direction;
+        if (newIndex <= 0 || newIndex >= appState.nodes.length - 1) return;
+        const [node] = appState.nodes.splice(index, 1);
+        appState.nodes.splice(newIndex, 0, node);
+        markDirty();
+        renderNodes();
+        focusNodeControl(node.id, `position-${node.id}`);
+        announce(`番号${newIndex + 1}へ移動しました。`);
+    }
+
+    function moveNodeTo(id, displayPosition) {
+        const fromIndex = appState.nodes.findIndex(n => n.id === id);
+        if (fromIndex <= 0 || fromIndex >= appState.nodes.length - 1) return;
+        let toIndex = Number(displayPosition) - 1;
+        toIndex = Math.max(1, Math.min(appState.nodes.length - 2, toIndex));
+        if (fromIndex === toIndex) return;
+        const [node] = appState.nodes.splice(fromIndex, 1);
+        appState.nodes.splice(toIndex, 0, node);
+        markDirty();
+        renderNodes();
+        focusNodeControl(node.id, `position-${node.id}`);
+        announce(`番号${toIndex + 1}へ移動しました。`);
+    }
+
+    function toggleNextOverride(id, enabled) {
+        const node = appState.nodes.find(n => n.id === id);
+        if (!node || !customNextTypes.has(node.type)) return;
+        node.nextOverride = Boolean(enabled);
+        if (!enabled) node.nextId = null;
+        markDirty();
+        renderNodes();
+        focusNodeControl(id, enabled ? `next-id-${id}` : `next-toggle-${id}`);
+        announce(enabled ? '次の行き先を変更できます。' : '次は自動になりました。');
+    }
+
+    function updateNodeProp(id, prop, value) {
+        const node = appState.nodes.find(n => n.id === id);
+        if (!node) return;
+        node[prop] = value === '' ? null : value;
+        markDirty();
+    }
+
+    function updateNodeType(id, type) {
+        const node = appState.nodes.find(n => n.id === id);
+        if (!node || node.locked) return;
+
+        const oldType = node.type;
+        if (oldType === 'decision') {
+            node.yesNext = null;
+            node.noNext = null;
+        }
+        if (oldType === 'loop_start' && type !== 'loop_start') {
+            node.loopCount = null;
+            appState.nodes.forEach(n => {
+                if (String(n.loopStartId ?? '') === String(node.id)) n.loopStartId = null;
+            });
+        }
+        if (oldType === 'loop_end') node.loopStartId = null;
+        if (customNextTypes.has(oldType) && !customNextTypes.has(type)) { node.nextId = null; node.nextOverride = false; }
+
+        node.type = type;
+        markDirty();
+
+        if (type === 'decision') {
+            node.nextId = null;
+            node.nextOverride = false;
+            showHint('「はい」「いいえ」の行き先を選択');
+        } else if (type === 'loop_start') {
+            node.nextId = null;
+            node.nextOverride = false;
+            node.loopCount = node.loopCount || null;
+            showHint('回数を入力');
+        } else if (type === 'loop_end') {
+            node.nextId = null;
+            node.nextOverride = false;
+            node.text = '';
+        }
+        renderNodes();
+        focusNodeControl(id, `node-type-${id}`);
+        announce('図記号を変更しました。');
+    }
+
+    function validateFlowchart() {
+        if (appState.nodes.length < 2) return '処理がありません。';
+        if (appState.nodes[0].type !== 'start') return '「開始」は一番上に置いてください。';
+        if (appState.nodes[appState.nodes.length - 1].type !== 'end') return '「終了」は一番下に置いてください。';
+
+        const usedLoopStarts = new Set();
+
+        for (let i = 0; i < appState.nodes.length; i++) {
+            const n = appState.nodes[i];
+            const no = i + 1;
+
+            if (!['loop_end', 'loop_start'].includes(n.type) && (!n.text || String(n.text).trim() === '')) {
+                return `番号${no} の処理内容が入力されていません。`;
+            }
+
+            if (customNextTypes.has(n.type) && n.nextOverride) {
+                if (!n.nextId) return `番号${no} の行き先を選んでください。`;
+                const target = appState.nodes.find(x => String(x.id) === String(n.nextId));
+                if (!target || target.type === 'start') return `番号${no} の行き先が正しくありません。`;
+                if (target.id === n.id) return `番号${no} は自分自身へ接続できません。`;
+            }
+
+            if (n.type === 'decision') {
+                if (!n.yesNext) return `番号${no} の「はい」の行き先が設定されていません。`;
+                if (!n.noNext) return `番号${no} の「いいえ」の行き先が設定されていません。`;
+                if (String(n.yesNext) === String(n.noNext)) return `番号${no} の「はい」と「いいえ」が同じ行き先になっています。`;
+                for (const [label, targetId] of [['はい', n.yesNext], ['いいえ', n.noNext]]) {
+                    const target = appState.nodes.find(x => String(x.id) === String(targetId));
+                    if (!target || target.type === 'start') return `番号${no} の「${label}」の行き先が正しくありません。`;
+                }
+            }
+
+            if (n.type === 'loop_start') {
+                const count = Number(n.loopCount);
+                if (!Number.isInteger(count) || count < 1) return `番号${no} の繰り返し回数は1以上の整数を指定してください。`;
+            }
+
+            if (n.type === 'loop_end') {
+                if (!n.loopStartId) return `番号${no} に対応するループ始端が設定されていません。`;
+                const startIndex = appState.nodes.findIndex(x => String(x.id) === String(n.loopStartId));
+                const startNode = startIndex >= 0 ? appState.nodes[startIndex] : null;
+                if (!startNode || startNode.type !== 'loop_start') return `番号${no} に設定されたループ始端が存在しないか、種類が変更されています。`;
+                if (startIndex >= i) return `番号${no} のループ終端より前に、対応するループ始端を置いてください。`;
+                if (usedLoopStarts.has(String(n.loopStartId))) return `1つのループ始端に複数のループ終端が設定されています。（番号${no}）`;
+                usedLoopStarts.add(String(n.loopStartId));
+            }
+        }
+
+        for (let i = 0; i < appState.nodes.length; i++) {
+            const n = appState.nodes[i];
+            if (n.type === 'loop_start' && !usedLoopStarts.has(String(n.id))) {
+                return `番号${i + 1} のループ始端に対応するループ終端がありません。`;
+            }
+        }
+        return null;
+    }
+
+    function generateFlowchart() {
+        clearValidationState();
+        const error = validateFlowchart();
+        if (error) {
+            showMessage(error);
+            focusNodeFromMessage(error);
+            return;
+        }
+        document.getElementById('app-message').style.display = 'none';
+        drawSVG(appState.nodes, 'flowchart-svg-container');
+        updateTextSummary();
+        announce('フローチャートを更新しました。右側のプレビューで確認できます。');
+    }
+
+    function updateTextSummary() {
+        const container = document.getElementById('flowchart-text-summary');
+        if (!container) return;
+        const ol = document.createElement('ol');
+        appState.nodes.forEach((node, index) => {
+            const li = document.createElement('li');
+            let text = getDisplayText(node).replace(/\n/g, ' ');
+            if (node.type === 'decision') {
+                const yesIndex = appState.nodes.findIndex(n => String(n.id) === String(node.yesNext));
+                const noIndex = appState.nodes.findIndex(n => String(n.id) === String(node.noNext));
+                text += `。はい→番号${yesIndex + 1}、いいえ→番号${noIndex + 1}`;
+            } else if (customNextTypes.has(node.type) && node.nextOverride && node.nextId) {
+                const nextIndex = appState.nodes.findIndex(n => String(n.id) === String(node.nextId));
+                text += `。次→番号${nextIndex + 1}`;
+            } else if (node.type === 'loop_end') {
+                const startIndex = appState.nodes.findIndex(n => String(n.id) === String(node.loopStartId));
+                text += `。番号${startIndex + 1}のループ始端へ戻る`;
+            }
+            li.textContent = `番号${index + 1}：${text}`;
+            ol.appendChild(li);
+        });
+        container.replaceChildren(ol);
+    }
+
+    // --- SVG 描画エンジン ---
+    const FONT_SIZE = 14;
+    const CHARS_PER_LINE = 12;
+    const MIN_W = 140;
+    const MIN_H = 50;
+    const MARGIN_Y = 54;
+    const BRANCH_GAP = 80;
+    const START_X = 260;
+    const RETURN_GAP = 70;
+    const RETURN_LANE_STEP = 34;
+    const ARROW_APPROACH = 20;
+    const BRANCH_OUT = 36;
+
+    let leftLanes = [];
+    let rightLanes = [];
+    let layoutBounds = { minX: 0, maxX: 0 };
+
+    function getDisplayText(node) {
+        let text = node.text || '';
+        if (node.type === 'loop_start') {
+            text = `${text || 'ループ'}\n${node.loopCount || ''}回`;
+        } else if (node.type === 'loop_end') {
+            const startNode = appState.nodes.find(n => String(n.id) === String(node.loopStartId));
+            text = `${startNode?.text || 'ループ'}\n終端`;
+        }
+        return text;
+    }
+
+    function calculateNodeSize(node) {
+        const text = getDisplayText(node);
+        const maxChars = node.type === 'decision' ? 10 : CHARS_PER_LINE;
+        const lines = [];
+        text.split('\n').forEach(line => {
+            let rest = line;
+            while (rest.length > maxChars) {
+                lines.push(rest.substring(0, maxChars));
+                rest = rest.substring(maxChars);
+            }
+            lines.push(rest);
+        });
+
+        const lineH = FONT_SIZE * 1.5;
+        const paddingY = node.type === 'decision' ? 44 : 20;
+        const paddingX = node.type === 'decision' ? 56 : 30;
+        const textH = Math.max(1, lines.length) * lineH;
+        const maxLen = Math.max(1, ...lines.map(l => l.length));
+        const textW = maxLen * FONT_SIZE;
+
+        node.w = Math.max(MIN_W, textW + paddingX * 2);
+        node.h = Math.max(MIN_H, textH + paddingY * 2);
+        node.lines = lines.length ? lines : [''];
+    }
+
+    function calculateLayout(nodes) {
+        nodes.forEach(n => calculateNodeSize(n));
+        nodes.forEach((n, i) => { n.row = i; n.col = 0; });
+
+        // 単純な前向き分岐は、一方の枝を右列へ逃がす。
+        nodes.forEach((n, i) => {
+            if (n.type !== 'decision') return;
+            const yesIndex = nodes.findIndex(x => String(x.id) === String(n.yesNext));
+            const noIndex = nodes.findIndex(x => String(x.id) === String(n.noNext));
+            if (yesIndex > i && noIndex > i) {
+                if (yesIndex === i + 1 && noIndex > i + 1) {
+                    for (let j = yesIndex; j < noIndex; j++) nodes[j].col = Math.max(nodes[j].col, 1);
+                } else if (noIndex === i + 1 && yesIndex > i + 1) {
+                    for (let j = noIndex; j < yesIndex; j++) nodes[j].col = Math.max(nodes[j].col, 1);
+                }
+            }
+        });
+
+        // 列ごとの最大幅から中心位置を求め、長文でも列同士が重ならないようにする。
+        const cols = [...new Set(nodes.map(n => n.col))].sort((a, b) => a - b);
+        const halfWidths = new Map();
+        cols.forEach(col => {
+            const maxHalf = Math.max(...nodes.filter(n => n.col === col).map(n => n.w / 2), MIN_W / 2);
+            halfWidths.set(col, maxHalf);
+        });
+        const centers = new Map([[0, START_X]]);
+        for (const col of cols.filter(c => c > 0)) {
+            const prev = col - 1;
+            const prevCenter = centers.get(prev) ?? START_X;
+            const prevHalf = halfWidths.get(prev) ?? MIN_W / 2;
+            const thisHalf = halfWidths.get(col) ?? MIN_W / 2;
+            centers.set(col, prevCenter + prevHalf + thisHalf + BRANCH_GAP);
+        }
+
+        let currentY = 50;
+        nodes.forEach((n, i) => {
+            if (i === 0) currentY += n.h / 2;
+            else currentY += nodes[i - 1].h / 2 + n.h / 2 + MARGIN_Y;
+            n.y = currentY;
+            n.x = centers.get(n.col) ?? START_X;
+        });
+
+        layoutBounds = {
+            minX: Math.min(...nodes.map(n => n.x - n.w / 2)),
+            maxX: Math.max(...nodes.map(n => n.x + n.w / 2))
+        };
+    }
+
+    function getEdgePoint(node, dir) {
+        const hw = node.w / 2;
+        const hh = node.h / 2;
+        if (dir === 'top') return { x: node.x, y: node.y - hh };
+        if (dir === 'bottom') return { x: node.x, y: node.y + hh };
+        if (dir === 'left') return { x: node.x - hw, y: node.y };
+        return { x: node.x + hw, y: node.y };
+    }
+
+    function getReturnLane(isLeft) {
+        if (isLeft) {
+            const laneX = layoutBounds.minX - RETURN_GAP - leftLanes.length * RETURN_LANE_STEP;
+            leftLanes.push(laneX);
+            return laneX;
+        }
+        const laneX = layoutBounds.maxX + RETURN_GAP + rightLanes.length * RETURN_LANE_STEP;
+        rightLanes.push(laneX);
+        return laneX;
+    }
+
+    function getNextNode(nodes, node, index) {
+        if (customNextTypes.has(node.type) && node.nextOverride && node.nextId) {
+            return nodes.find(x => String(x.id) === String(node.nextId)) || null;
+        }
+        return nodes[index + 1] || null;
+    }
+
+    function preferredDecisionDir(fromNode, toNode, label, otherDir = null) {
+        if (toNode.y < fromNode.y) return label === 'はい' ? 'left' : 'right';
+        if (toNode.x > fromNode.x + 2) return 'right';
+        if (toNode.x < fromNode.x - 2) return 'left';
+        const dir = label === 'はい' ? 'bottom' : 'right';
+        if (dir === otherDir) return dir === 'bottom' ? 'right' : 'bottom';
+        return dir;
+    }
+
+    function drawSVG(nodes, containerId) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        leftLanes = [];
+        rightLanes = [];
+        calculateLayout(nodes);
+
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.id = 'flowchart-svg';
+        svg.style.fontFamily = "'BIZ UDPGothic', 'Yu Gothic', Meiryo, sans-serif";
+        svg.setAttribute('role', 'img');
+        svg.setAttribute('aria-labelledby', 'flowchart-svg-title flowchart-svg-desc');
+        svg.setAttribute('focusable', 'false');
+        const svgTitle = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+        svgTitle.id = 'flowchart-svg-title';
+        svgTitle.textContent = '作成したフローチャート';
+        const svgDesc = document.createElementNS('http://www.w3.org/2000/svg', 'desc');
+        svgDesc.id = 'flowchart-svg-desc';
+        svgDesc.textContent = `${nodes.length}個の要素からなるフローチャートです。詳しい内容は下の「フローチャートを文字でも確認」から確認できます。`;
+        svg.appendChild(svgTitle);
+        svg.appendChild(svgDesc);
+
+        const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+        defs.innerHTML = `
+            <marker id="arrow" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155" />
+            </marker>
+            <marker id="arrow-return" viewBox="0 0 10 10" refX="9.2" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#3b82f6" />
+            </marker>
+        `;
+        svg.appendChild(defs);
+
+        const linesGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        const nodesGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        const labelsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+        nodes.forEach((n, i) => {
+            if (n.type === 'decision') {
+                const yesNode = nodes.find(x => String(x.id) === String(n.yesNext));
+                const noNode = nodes.find(x => String(x.id) === String(n.noNext));
+                let yesDir = yesNode ? preferredDecisionDir(n, yesNode, 'はい') : 'bottom';
+                let noDir = noNode ? preferredDecisionDir(n, noNode, 'いいえ', yesDir) : 'right';
+                if (yesNode && noNode && yesDir === noDir && yesNode.y >= n.y && noNode.y >= n.y) {
+                    noDir = yesDir === 'bottom' ? 'right' : 'bottom';
+                }
+                if (yesNode) drawConnection(linesGroup, labelsGroup, n, yesNode, 'はい', yesDir);
+                if (noNode) drawConnection(linesGroup, labelsGroup, n, noNode, 'いいえ', noDir);
+            } else if (n.type === 'loop_end') {
+                const startNode = nodes.find(x => String(x.id) === String(n.loopStartId));
+                if (startNode) drawConnection(linesGroup, labelsGroup, n, startNode, null, 'left');
+                const nextNode = nodes[i + 1];
+                if (nextNode) drawConnection(linesGroup, labelsGroup, n, nextNode, null, 'bottom');
+            } else if (n.type !== 'end') {
+                const nextNode = getNextNode(nodes, n, i);
+                if (nextNode) drawConnection(linesGroup, labelsGroup, n, nextNode, null, 'bottom');
+            }
+        });
+
+        nodes.forEach(n => drawNodeShape(nodesGroup, n));
+        svg.appendChild(linesGroup);
+        svg.appendChild(nodesGroup);
+        svg.appendChild(labelsGroup);
+
+        let minX = layoutBounds.minX;
+        let maxX = layoutBounds.maxX;
+        const maxY = Math.max(...nodes.map(n => n.y + n.h / 2));
+        leftLanes.forEach(x => { minX = Math.min(minX, x); });
+        rightLanes.forEach(x => { maxX = Math.max(maxX, x); });
+
+        const viewBoxMinX = Math.min(0, minX - 50);
+        const viewBoxWidth = Math.max(600, maxX - viewBoxMinX + 100);
+        const viewBoxHeight = Math.max(600, maxY + 100);
+        svg.setAttribute('width', '100%');
+        svg.setAttribute('height', viewBoxHeight);
+        svg.setAttribute('viewBox', `${viewBoxMinX} 0 ${viewBoxWidth} ${viewBoxHeight}`);
+        container.appendChild(svg);
+    }
+
+    function dedupePoints(points) {
+        const result = [];
+        for (const p of points) {
+            const prev = result[result.length - 1];
+            if (!prev || Math.abs(prev.x - p.x) > 0.01 || Math.abs(prev.y - p.y) > 0.01) result.push(p);
+        }
+        return result;
+    }
+
+    function pointsToPath(points) {
+        const p = dedupePoints(points);
+        if (p.length < 2) return '';
+        return `M ${p[0].x} ${p[0].y} ` + p.slice(1).map(pt => `L ${pt.x} ${pt.y}`).join(' ');
+    }
+
+    function drawConnection(linesGroup, labelsGroup, fromNode, toNode, label, startDir) {
+        const isReturn = toNode.y < fromNode.y - 1;
+        let points = [];
+        let labelPos = { x: 0, y: 0 };
+
+        if (isReturn) {
+            const isLeft = startDir !== 'right';
+            const laneX = getReturnLane(isLeft);
+            const p1 = getEdgePoint(fromNode, isLeft ? 'left' : 'right');
+            const p4 = getEdgePoint(toNode, isLeft ? 'left' : 'right');
+            const preTarget = { x: p4.x + (isLeft ? -ARROW_APPROACH : ARROW_APPROACH), y: p4.y };
+            points = [p1, { x: laneX, y: p1.y }, { x: laneX, y: p4.y }, preTarget, p4];
+            labelPos = { x: p1.x + (isLeft ? -34 : 34), y: p1.y - 16 };
+        } else {
+            const p1 = getEdgePoint(fromNode, startDir);
+            const p4 = getEdgePoint(toNode, 'top');
+            const preTarget = { x: p4.x, y: p4.y - ARROW_APPROACH };
+
+            if (startDir === 'bottom') {
+                if (Math.abs(p1.x - p4.x) < 0.01) {
+                    points = [p1, preTarget, p4];
+                } else {
+                    const available = Math.max(20, preTarget.y - p1.y);
+                    const midY = p1.y + Math.max(20, available / 2);
+                    points = [p1, { x: p1.x, y: midY }, { x: p4.x, y: midY }, preTarget, p4];
+                }
+                labelPos = { x: p1.x + 28, y: p1.y + 18 };
+            } else if (startDir === 'right') {
+                const outX = p1.x + BRANCH_OUT;
+                points = [p1, { x: outX, y: p1.y }, { x: outX, y: preTarget.y }, preTarget, p4];
+                labelPos = { x: p1.x + 30, y: p1.y - 16 };
+            } else {
+                const outX = p1.x - BRANCH_OUT;
+                points = [p1, { x: outX, y: p1.y }, { x: outX, y: preTarget.y }, preTarget, p4];
+                labelPos = { x: p1.x - 30, y: p1.y - 16 };
+            }
+        }
+
+        const pathD = pointsToPath(points);
+        if (!pathD) return;
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', pathD);
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke', isReturn ? '#3b82f6' : '#334155');
+        path.setAttribute('stroke-width', '2');
+        path.setAttribute('stroke-linejoin', 'round');
+        path.setAttribute('marker-end', isReturn ? 'url(#arrow-return)' : 'url(#arrow)');
+        linesGroup.appendChild(path);
+
+        if (label) addLabel(labelsGroup, labelPos.x, labelPos.y, label);
+    }
+
+    function addLabel(labelsGroup, x, y, text) {
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        const w = Math.max(34, text.length * 14 + 12);
+        const h = 22;
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x', x - w / 2);
+        rect.setAttribute('y', y - h / 2);
+        rect.setAttribute('width', w);
+        rect.setAttribute('height', h);
+        rect.setAttribute('fill', 'white');
+        rect.setAttribute('stroke', '#e2e8f0');
+        rect.setAttribute('stroke-width', '1');
+        rect.setAttribute('rx', 4);
+
+        const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        t.setAttribute('x', x);
+        t.setAttribute('y', y);
+        t.setAttribute('fill', '#b91c1c');
+        t.setAttribute('font-weight', 'bold');
+        t.setAttribute('font-size', '12px');
+        t.setAttribute('text-anchor', 'middle');
+        t.setAttribute('dominant-baseline', 'central');
+        t.textContent = text;
+        g.appendChild(rect);
+        g.appendChild(t);
+        labelsGroup.appendChild(g);
+    }
+
+    function drawNodeShape(nodesGroup, node) {
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        const { x, y, w, h } = node;
+        const hw = w / 2;
+        const hh = h / 2;
+        let shape;
+
+        if (node.type === 'start' || node.type === 'end') {
+            shape = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            shape.setAttribute('x', x - hw); shape.setAttribute('y', y - hh);
+            shape.setAttribute('width', w); shape.setAttribute('height', h);
+            shape.setAttribute('rx', h / 2); shape.setAttribute('ry', h / 2);
+        } else if (node.type === 'process') {
+            shape = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            shape.setAttribute('x', x - hw); shape.setAttribute('y', y - hh);
+            shape.setAttribute('width', w); shape.setAttribute('height', h);
+        } else if (node.type === 'decision') {
+            shape = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            shape.setAttribute('points', `${x},${y - hh} ${x + hw},${y} ${x},${y + hh} ${x - hw},${y}`);
+        } else if (node.type === 'data') {
+            shape = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            const slant = w * 0.15;
+            shape.setAttribute('points', `${x - hw + slant},${y - hh} ${x + hw},${y - hh} ${x + hw - slant},${y + hh} ${x - hw},${y + hh}`);
+        } else if (node.type === 'loop_start') {
+            shape = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            const cut = 20;
+            shape.setAttribute('points', `${x - hw + cut},${y - hh} ${x + hw - cut},${y - hh} ${x + hw},${y - hh + cut} ${x + hw},${y + hh} ${x - hw},${y + hh} ${x - hw},${y - hh + cut}`);
+        } else if (node.type === 'loop_end') {
+            shape = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            const cut = 20;
+            shape.setAttribute('points', `${x - hw},${y - hh} ${x + hw},${y - hh} ${x + hw},${y + hh - cut} ${x + hw - cut},${y + hh} ${x - hw + cut},${y + hh} ${x - hw},${y + hh - cut}`);
+        } else if (node.type === 'defined') {
+            shape = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            shape.setAttribute('x', x - hw); shape.setAttribute('y', y - hh);
+            shape.setAttribute('width', w); shape.setAttribute('height', h);
+            for (const lx of [x - hw + 15, x + hw - 15]) {
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', lx); line.setAttribute('y1', y - hh);
+                line.setAttribute('x2', lx); line.setAttribute('y2', y + hh);
+                line.setAttribute('stroke', '#334155'); line.setAttribute('stroke-width', '2');
+                g.appendChild(line);
+            }
+        }
+
+        if (shape) {
+            shape.setAttribute('fill', '#ffffff');
+            shape.setAttribute('stroke', '#334155');
+            shape.setAttribute('stroke-width', '2');
+            g.insertBefore(shape, g.firstChild);
+        }
+
+        const textElem = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        textElem.setAttribute('text-anchor', 'middle');
+        textElem.setAttribute('dominant-baseline', 'central');
+        textElem.setAttribute('fill', '#0f172a');
+        textElem.setAttribute('font-size', `${FONT_SIZE}px`);
+        const startY = y - ((node.lines.length - 1) * FONT_SIZE * 1.5) / 2;
+        node.lines.forEach((lineText, idx) => {
+            const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+            tspan.setAttribute('x', x);
+            tspan.setAttribute('y', startY + idx * FONT_SIZE * 1.5);
+            tspan.textContent = lineText;
+            textElem.appendChild(tspan);
+        });
+        g.appendChild(textElem);
+        nodesGroup.appendChild(g);
+    }
+
+    function resetApp() {
+        if (appState.dirty && !window.confirm('入力した内容をすべて消して、最初からやり直しますか？')) return;
+        appState.nodes = [
+            { id: 1, type: 'start', text: '開始', locked: true },
+            { id: 2, type: 'process', text: '' },
+            { id: 3, type: 'end', text: '終了', locked: true }
+        ];
+        appState.nextId = 4;
+        appState.dirty = false;
+        document.getElementById('flowchart-svg-container').innerHTML = '<div class="preview-placeholder">「作成」を押すと表示</div>';
+        document.getElementById('flowchart-text-summary').textContent = 'まだ作成されていません。';
+        document.getElementById('app-message').style.display = 'none';
+        document.getElementById('hint-message').style.display = 'none';
+        renderNodes();
+        focusNodeControl(2, 'node-text-2');
+        announce('入力内容をリセットしました。');
+    }
+</script>
+
+</body>
+</html>
